@@ -1,0 +1,98 @@
+Career Commander — Phase 2 Transcript
+======================================
+
+User request
+------------
+Implement authentication and user identity for a multi-user Career Commander system.
+Ensure user-owned data is isolated server-side and test signup, duplicate accounts,
+login, invalid login, logout, protected routes, cross-user access, password reset,
+and invalid/expired authentication.
+
+Repository state before Phase 2
+-------------------------------
+The repository contained only an empty CareerCommandermainidea.md file. No framework,
+frontend, backend, database, authentication, routes, or tests existed.
+
+Implementation decisions
+------------------------
+- Used Node.js built-in HTTP server and SQLite support; no new frontend framework.
+- Used server-rendered HTML with a small Career Commander-styled stylesheet.
+- Used salted scrypt password hashing.
+- Used opaque random session tokens stored only as SHA-256 hashes.
+- Used HttpOnly, SameSite=Lax session cookies.
+- Rotated sessions on signup, login, and password changes.
+- Used one-time, expiring password reset tokens stored only as hashes.
+- Added CSRF token validation and same-origin checks for state-changing requests.
+- Added security headers, CSP, XSS-safe HTML escaping, body-size limits, and basic
+  login rate limiting.
+- Resolved ownership exclusively from the authenticated session principal.
+- Added SQLite ownership-filtered profile access to demonstrate the IDOR boundary.
+- Added audit events for account creation, login, logout, password changes, and reset.
+- Did not add Google OAuth because no credentials or infrastructure existed.
+- Did not continue into onboarding or domain workflows.
+
+Implemented routes
+------------------
+Public pages:
+- /
+- /login
+- /signup
+- /password-reset
+
+Protected pages:
+- /dashboard
+- /opportunities
+- /career-profile
+- /evidence
+- /analysis
+- /applications
+- /discovery
+- /settings
+
+Authentication APIs:
+- /api/auth/csrf
+- /api/auth/me
+- /api/auth/signup
+- /api/auth/login
+- /api/auth/logout
+- /api/auth/password-reset/request
+- /api/auth/password-reset/confirm
+
+Protected account and ownership APIs:
+- /api/settings/password
+- /api/settings/account
+- /api/settings/audit
+- /api/profile
+- /api/profiles/:profileId
+
+Files added
+-----------
+- package.json
+- README.md
+- src/app.js
+- src/db.js
+- src/security.js
+- src/server.js
+- public/styles.css
+- tests/auth.test.js
+- docs/authentication-boundaries.md
+
+Validation
+----------
+Command: npm test
+Result: 12 tests passed, 0 failed.
+
+Command: node --check src/app.js; node --check src/db.js; node --check src/security.js;
+         node --check src/server.js; node --check tests/auth.test.js
+Result: all files passed syntax validation.
+
+Known infrastructure limitation
+-------------------------------
+Password reset mechanics are implemented, but no email delivery provider is configured.
+Development and test environments return the reset token for local verification. Production
+responses remain generic until an email delivery adapter is connected.
+
+Phase status
+------------
+Authentication boundaries are implemented and tested. Onboarding and Career Commander
+domain workflows remain intentionally deferred.

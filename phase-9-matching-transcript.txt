@@ -1,0 +1,20 @@
+Career Commander — Phase 9 Deterministic Evidence Matcher
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added deterministic matching in src/matcher.js and persisted MatchRuns plus MatchResults.
+- Matching uses explicit normalized skill relationships and evidence links only.
+- VERIFIED requires both a VERIFIED skill state and linked VERIFIED evidence.
+- LEARNING produces PARTIAL when relevant; missing or unsupported evidence produces MISSING.
+- Every result contains requirement identity, priority, evidence summaries, state, and an explanation.
+
+Boundary
+- The matcher consumes validated JobRequirements and candidate-owned Skills/Evidence.
+- It performs no LLM call, calculates no overall score, and does not infer production experience from names, education, URLs, or aspirations.
+
+Tests
+- Covered MATCH, PARTIAL, MISSING, unrelated evidence, linked evidence, required/preferred priority, repeatability, ownership, and the absence of score output.
+
+Status
+- PASS. Phase 9 behavior is exercised by tests/pipeline.test.js.

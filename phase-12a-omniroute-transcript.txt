@@ -1,0 +1,269 @@
+Career Commander — Phase 12A Transcript
+Live OmniRoute Integration and End-to-End Verification
+Date: 2026-10-06
+
+Scope
+-----
+Phase 12A only. No Phase 13+ functionality was implemented.
+
+Inspection
+---------
+The repository already had provider injection points in createApp for search,
+analyst, mailbox, company signals, project relevance, report synthesis, and a
+general OmniRoute object. It did not contain a concrete live OmniRoute HTTP
+implementation. The server previously created the application without a live
+provider.
+
+The existing deterministic JobRequirements validation, Matcher, Scorer, Gap
+Analyzer, automatic analysis runner, normalization, deduplication,
+provenance, report, authentication, CSRF, ownership, and security behavior
+were preserved.
+
+Implementation
+--------------
+Added src/omniRoute.js with:
+
+- OmniRouteClient and typed provider errors.
+- Provider-agnostic HTTP search boundary using POST /search.
+- Structured chat boundary using /chat/completions for analyst and enrichment
+  stages.
+- Configurable timeout, bounded retry behavior, optional API key, and optional
+  model selection.
+- Response validation for search and structured LLM output.
+- Safe operational logging of provider, endpoint type, stage, duration,
+  success/failure, and retry count. Secrets and raw private content are not
+  logged.
+
+Updated src/server.js to inject the configured OmniRoute implementation through
+the existing search and analyst provider boundaries. The domain and pipeline
+remain provider-agnostic.
+
+Configuration inspected
+-----------------------
+Default base URL:
+  http://localhost:20128/v1
+
+Supported environment variables:
+  OMNIROUTE_BASE_URL
+  OMNIROUTE_TIMEOUT_MS
+  OMNIROUTE_MAX_RETRIES
+  OMNIROUTE_SEARCH_LIMIT
+  OMNIROUTE_API_KEY
+  OMNIROUTE_MODEL
+  OMNIROUTE_LOGGING
+
+No credentials were hard-coded. No provider secret values were recorded in
+this transcript.
+
+Live connectivity result
+------------------------
+The configured local address was tested on 2026-10-06. Port 20128 was not
+reachable and no OmniRoute process was running. The adapter attempted the
+configured request and its bounded retry, then returned typed failures:
+
+  search: OMNIROUTE_UNREACHABLE
+  stage: search
+  retryCount: 1
+
+  chat: OMNIROUTE_UNREACHABLE
+  stage: job-analysis
+  retryCount: 1
+
+The live search endpoint, live chat endpoint, and configured model therefore
+could not be exercised. This is an environment availability failure, not a
+successful live integration.
+
+Contract and failure verification
+---------------------------------
+The local adapter contract tests passed for:
+
+- successful search and structured chat responses;
+- malformed upstream responses;
+- timeout handling;
+- transient upstream failure retry and retry-count reporting;
+- provider boundary preservation.
+
+The opt-in live test remains skipped unless RUN_LIVE_OMNIROUTE=1 is set. The
+normal test suite does not depend on OmniRoute being available.
+
+Manual and Web end-to-end status
+--------------------------------
+The existing mocked end-to-end tests prove the converged workflow:
+
+  Manual/Web/Email source
+  -> Opportunity
+  -> validated JobRequirements
+  -> deterministic Matcher
+  -> deterministic Score
+  -> deterministic Gaps
+  -> consolidated Opportunity Report
+
+The required real manual analysis and real profile-driven web scan were not
+run to completion because the live OmniRoute prerequisite was unavailable.
+No live opportunity, live score, live gap result, live duplicate result, or
+live discovery metrics were fabricated.
+
+Deterministic boundary verification
+------------------------------------
+The live adapter only interprets/enriches. It does not calculate candidate
+fit, MATCH/PARTIAL/MISSING, scores, or gaps. Existing tests passed confirming:
+
+- Matcher respects evidence states and does not calculate a score.
+- Scorer is deterministic and handles weights, partials, missing values, and
+  edge cases.
+- Gap Analyzer only emits evidence-grounded PARTIAL and MISSING gaps.
+- Analyst output is validated before deterministic stages.
+- Untrusted job content remains data and cannot override analyst instructions.
+
+Duplicate, retry, and preservation behavior
+---------------------------------------------
+Existing workflow integration tests passed for normalization, deduplication,
+additional provenance, automatic analysis, and preservation of existing
+opportunities when a provider fails. The new adapter also reports retry and
+typed failure state. A live duplicate scan was not possible without the
+provider.
+
+Test command and exact result
+-----------------------------
+Command:
+  npm test
+
+Result:
+  47 tests total
+  46 passed
+  0 failed
+  1 skipped
+
+The skipped test is the opt-in live OmniRoute search/chat contract test,
+skipped because RUN_LIVE_OMNIROUTE=1 was not enabled and the local provider
+was unreachable.
+
+Overall status
+--------------
+FAIL
+
+Reason: Phase 12A requires the real OmniRoute pipeline to be exercised. The
+configured OmniRoute instance was not running/reachable, so live connectivity,
+live manual analysis, live web discovery, and their downstream live report
+results could not be proven.
+
+Known limitation
+----------------
+Start a compatible OmniRoute instance at the configured base URL, then run the
+opt-in live test and the manual/web acceptance journeys. Until that happens,
+the adapter contract and offline workflow are verified, but the Phase 12A
+live acceptance gate remains incomplete.
+
+Live Reverification Addendum — 2026-10-06
+-----------------------------------------
+The local OmniRoute instance was subsequently available and was used without
+reinstallation or process replacement.
+
+OmniRoute:
+  version: 3.8.51 (environment-provided verification)
+  health: healthy; setupComplete: true
+  base URL: http://localhost:20128/v1
+  search provider: duckduckgo-free
+  working chat model: ddgw/gpt-4o-mini (response model: gpt-4o-mini)
+
+Adapter correction:
+  OmniRoute 3.8.51 requires {"query":"..."} for /v1/search. The adapter now
+  sends one bounded query at a time, combines and deduplicates results, and
+  caps the initial result set. createApp now passes the OmniRoute object into
+  existing provider boundaries so method context is preserved for search,
+  company signals, project relevance, and report synthesis.
+
+Analyst correction:
+  The live analyst prompt now explicitly requires every JobRequirements field,
+  empty arrays where appropriate, JSON-only output, and no score/match/gap
+  decisions. Job content remains inside the untrusted JOB_POSTING_DATA
+  boundary.
+
+Live manual result:
+  The authenticated existing profile was used without adding candidate skills
+  or evidence. The provided Python/Django/PostgreSQL/AWS job reached the live
+  analyst and persisted validated requirements:
+    required: Python, Django, PostgreSQL, AWS
+    preferred: Docker, TypeScript
+  Deterministic result:
+    MATCH/PARTIAL/MISSING: six MISSING results because the profile has no
+    declared skills or evidence.
+    score: 0/100; required 0%; preferred 0%; weights 70%/30%.
+    gaps: 6 (4 required, 2 preferred).
+    report: READY with deterministic facts and evidence-building suggestions.
+  Live company signals subsequently returned READY from provider omniroute.
+  Report synthesis was unavailable for one attempt; deterministic report facts
+  remained intact and were not replaced by generated claims.
+
+Prompt-injection result:
+  The hostile posting returned a valid complete requirements schema. It did
+  not return system prompts, environment variables, or private data.
+
+Live profile-driven Web result:
+  The actual profile contained an empty target-role list, empty location,
+  zero skills, and zero evidence. The bounded fallback query was:
+    software engineer jobs
+  OmniRoute returned 5 results. All 5 were generic category/search pages or
+  otherwise lacked an identifiable company and job description. The pipeline
+  rejected all 5:
+    found: 5
+    new: 0
+    duplicates: 0
+    rejected: 5
+    analyzed: 0
+  No fake opportunities were shown. Because no identifiable Web opportunity
+  was returned, live Web automatic analysis and live Web deduplication could
+  not be proven against this profile.
+
+Mock email result:
+  An isolated in-memory authenticated app used the existing mailbox adapter
+  boundary with a MOCK provider and the live OmniRoute analyst. Results:
+    found: 1
+    new: 1
+    duplicates: 0
+    rejected: 0
+    analyzed: 1
+  The resulting opportunity reached analysisState COMPLETE with score 0 and
+  three deterministic gaps.
+
+Failure and recovery:
+  An isolated SQLite run simulated an analyst provider outage. The opportunity
+  remained persisted, a FAILED analyst record was stored, and the opportunity
+  could be retried. Retrying with live OmniRoute completed requirements,
+  deterministic score, and gaps.
+
+Final verification commands:
+  node --check src/app.js
+  node --check src/omniRoute.js
+  node --check src/jobAnalyst.js
+  node --check src/server.js
+  node --check tests/omniroute.test.js
+  node --check tests/live-omniroute.test.js
+  npm test
+  RUN_LIVE_OMNIROUTE=1 npm test (PowerShell environment equivalent)
+
+Final test results:
+  normal suite: 47 total, 46 passed, 0 failed, 1 opt-in live test skipped
+  live suite: 47 total, 47 passed, 0 failed, 0 skipped
+
+Files changed in this phase:
+  src/omniRoute.js
+  src/app.js
+  src/jobAnalyst.js
+  tests/omniroute.test.js
+  phase-12a-omniroute-transcript.txt
+
+Database migrations:
+  None. Existing SQLite schema and user data were preserved.
+
+Final Phase 12A status:
+  FAIL
+
+Exact blocker:
+  The required live profile-driven Web path did not produce an identifiable
+  opportunity to automatically analyze. The authenticated profile used for
+  acceptance has no target roles, location, skills, or evidence, and OmniRoute
+  returned only generic category pages for its honest fallback query. Passing
+  requires a profile with real target context and a live search result that
+  identifies an individual opportunity; fabricating either would violate the
+  product rules.

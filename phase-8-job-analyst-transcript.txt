@@ -1,0 +1,21 @@
+Career Commander — Phase 8 Job Analyst
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added a provider-agnostic Job Analyst boundary in src/jobAnalyst.js.
+- Added the validated job-requirements-v1 contract for required/preferred skills, responsibilities, experience, education, location, and other constraints.
+- Added analysis metadata for provider, model, analyst version, status, content hash, raw output, and failures.
+- Added authenticated analyze action and inspectable structured requirements on Opportunity detail.
+
+Safety
+- Raw job content remains stored and viewable.
+- Job text is passed as untrusted data inside JOB_POSTING_DATA delimiters; it cannot override analyst instructions.
+- Malformed, contradictory, empty, oversized, or provider-failed output is rejected or recorded as FAILED.
+- No live provider is required by the test suite; deterministic provider mocks are used.
+
+Tests
+- Covered valid output, malformed output, schema errors, duplicate requirements, empty output, hostile prompt-injection text, raw-content preservation, provider metadata, and safe provider failure handling.
+
+Status
+- PASS. Phase 8 behavior is exercised by tests/pipeline.test.js.

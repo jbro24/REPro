@@ -1,0 +1,69 @@
+Career Commander — Phase 6 Full Sakura Landing Page
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Replaced the compact root hero with a full public, server-rendered landing page.
+- Preserved the existing Node.js HTTP server, HTML rendering, CSS tokens, typography,
+  authentication links, protected routes, and security headers.
+- Added a public navigation with How it works, Evidence, Sign in, and Get started.
+- Added a small same-origin client script only for landing-compatible form loading behavior;
+  no frontend framework or state system was introduced.
+
+Sections
+- Hero: Your career. Backed by evidence.
+- The problem: convincing text is not supported evidence.
+- Career Commander difference: AI interprets, code decides and checks, human approves.
+- Pipeline: job posting through human review.
+- Evidence context: VERIFIED, LEARNING, and NO EVIDENCE.
+- Deterministic scoring: clearly marked conceptual scoring example.
+- Claim verification: unsupported versus supported wording.
+- Human review: no automatic application submission.
+- Product walkthrough: opportunity through review, explicitly future-facing where needed.
+- Opportunity intake: Internet, Email, and Manual as planned sources.
+- Evidence to growth: gaps become proof-producing tasks.
+- Final CTA: Build your evidence base. Then apply with it.
+
+Visual system
+- Reused Phase 4 warm paper, charcoal, Sakura, green, neutral line, spacing, focus, and
+  button tokens.
+- Added one inline SVG Sakura tree with a mature trunk on the right and long branches toward
+  the left edge.
+- Used editorial dividers, lists, lines, and restrained panels instead of icon grids or fake
+  dashboard cards.
+
+Animation
+- Added twelve lightweight DOM petals with varied timing, drift, size, opacity, and rotation.
+- Petals are decorative, pointer-inert, and do not use canvas, dependencies, cursor tracking,
+  glow, or particle effects.
+- prefers-reduced-motion disables petal animation and leaves a sparse static Sakura presence.
+
+Responsive behavior
+- Desktop uses the wide asymmetric tree and left/lower-left hero copy.
+- Tablet reduces the tree reach and rebalances hero copy.
+- Mobile simplifies and shifts the tree, reduces its reach, stacks section content, and keeps
+  headline and actions readable without horizontal overflow by composition.
+
+Accessibility and performance
+- Semantic sections, ordered headings, meaningful link text, aria labels, and decorative
+  tree/petals hidden from assistive technology.
+- Existing visible focus and contrast rules remain in use.
+- No animation library, font dependency, image payload, or frontend framework was added.
+
+Tests
+- npm test: 29 passed, 0 failed.
+- Syntax validation passed for src/app.js, public/app.js, and tests/landing.test.js.
+- HTTP smoke coverage verifies /, /login, /signup, /password-reset, /app.js, CTA anchors,
+  protected dashboard/evidence redirects, reduced-motion CSS, and landing content.
+
+Visual QA limitation
+- Browser connector tooling was not exposed in this session. No screenshot-level browser
+  inspection is claimed. Responsive behavior was reviewed from the source CSS and covered by
+  the route/content checks above.
+
+Known limitations
+- Future analysis, discovery, matching, scoring, roadmap, drafting, and claim-verification
+  surfaces are described as concepts or planned capabilities only.
+- The root landing page does not add real opportunity or application functionality.
+
+Next recommended phase: Phase 7 — Opportunity Intake and Canonical Normalization.

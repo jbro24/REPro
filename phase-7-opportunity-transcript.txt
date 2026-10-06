@@ -1,0 +1,22 @@
+Career Commander — Phase 7 Opportunity Intake and Canonical Normalization
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added a first-class user-owned Opportunity entity with raw content, normalized comparison fields, lifecycle state, source type, timestamps, and optional HTTP/HTTPS URL.
+- Added manual intake at /opportunities and /opportunities/new, detail rendering at /opportunities/:id, and authenticated API CRUD.
+- Added deterministic normalization, canonical URL handling, content hashing, and deduplication.
+- Duplicate intake reuses the existing opportunity and appends source provenance rather than creating a second record.
+
+Data and security
+- Added opportunities and opportunity_provenance tables with user ownership, controlled enums, uniqueness constraints, indexes, and cascade behavior.
+- Raw content is preserved independently from normalized comparison values.
+- Ownership is resolved from the authenticated session; cross-user reads and mutations return not found.
+- URL, text length, source, CSRF, same-origin, request-limit, and escaped-rendering controls remain in force.
+- Added opportunity_created, opportunity_updated, opportunity_deleted, opportunity_deduplicated, and opportunity_source_added audit events.
+
+Tests
+- Covered create/read/update/delete, manual intake, normalization, URL validation, dangerous schemes, deduplication, same-company/different-job handling, provenance, ownership, CSRF, XSS-safe rendering, and oversized content.
+
+Status
+- PASS. Phase 7 behavior is exercised by tests/pipeline.test.js.

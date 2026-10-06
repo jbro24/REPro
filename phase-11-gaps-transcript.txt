@@ -1,0 +1,21 @@
+Career Commander — Phase 11 Gap Analysis
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added deterministic gap analysis in src/gaps.js and persisted GapRuns plus individual Gaps.
+- PARTIAL and MISSING MatchResults become explicit gaps; MATCH results do not.
+- Each gap retains requirement identity, required/preferred priority, current evidence, state, explanation, missing capability/evidence language, next action, and logic version.
+- Gap analysis consumes MatchResults only and does not reparse raw job text or invent candidate claims.
+- Zero-gap runs are recorded so completed all-MATCH analysis is distinguishable from analysis not yet run.
+
+UI
+- Opportunity detail progressively exposes requirements, evidence match, score, and gaps.
+- The presentation uses restrained sections, tables, source content, provenance, explanations, and honest completion states.
+- No roadmap or future application functionality was fabricated.
+
+Tests
+- Covered PARTIAL, MISSING, MATCH exclusion, required/preferred priority, evidence explanations, no invented weakness claims, ownership, and zero-gap persistence.
+
+Status
+- PASS. Phase 11 behavior is exercised by tests/pipeline.test.js.

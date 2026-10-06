@@ -1,0 +1,143 @@
+Career Commander — Phase 4 Transcript
+======================================
+
+User request
+------------
+Establish the permanent Career Commander visual language and reusable server-rendered UI
+primitives without changing the Node HTTP + SQLite architecture or implementing future
+Evidence Locker, discovery, analysis, matching, scoring, roadmap, applications, claims, or
+submission functionality.
+
+Phase 4 inspection
+------------------
+The existing UI was a single server-rendered HTML layer in src/app.js with one stylesheet
+at public/styles.css. The prior stylesheet used a navy/mint palette, explicit Inter font,
+rounded shadowed cards, wrapped navigation, broad hero headings, and minimal status/form
+primitives. Existing form markup, route behavior, auth flow, onboarding flow, and ownership
+logic were retained.
+
+Visual audit findings before changes
+------------------------------------
+- Public and authenticated screens shared the same generic card treatment.
+- Typography used Inter and lacked a centralized scale.
+- Colors were partially centralized but still mixed with ad hoc navy/mint values.
+- Navigation wrapped without a dedicated account menu or clear mobile recomposition.
+- Status rows were text-only and had no reusable semantic status treatment.
+- Forms had labels but lacked a complete shared focus, textarea/select, and state system.
+- Tables, empty states, loading states, error states, and confirmation primitives were absent.
+- The landing page had no restrained Sakura identity cue.
+
+Design system implemented
+-------------------------
+Centralized tokens in public/styles.css:
+- paper, surface, ink, muted-ink, line
+- sakura, sakura-soft, leaf
+- success, warning, error, focus
+- system sans family with platform fallbacks
+- shared spacing scale
+- shared small/medium radius tokens
+
+Reusable primitives added or refined:
+- authenticated page shell
+- quiet responsive navigation
+- account details menu with settings and logout
+- landing surface and restrained Sakura branch reference
+- buttons and secondary/danger variants
+- form fields, textarea, select, focus states
+- required/optional labels
+- validation, success, error, and boundary messages
+- section headers and dividers
+- onboarding step indicators
+- profile/record list treatment
+- semantic status rows and markers
+- evidence summary rows
+- table wrapper/table primitives
+- empty/loading/error/confirmation state primitives
+- visually-hidden accessibility utility
+
+Updated screens
+---------------
+- Landing page
+- Login
+- Signup
+- Password reset
+- Onboarding welcome
+- Onboarding profile
+- Onboarding skills
+- Onboarding projects
+- Onboarding experience
+- Evidence setup
+- Dashboard
+- Career Profile
+- Settings
+- Authenticated navigation
+
+Visual direction
+----------------
+- Warm paper and surface backgrounds
+- Charcoal typography
+- Restrained Sakura pink and natural green
+- Neutral dividers
+- Generous whitespace
+- No gradients, glassmorphism, dark mode, decorative icon system, scroll animation,
+  cursor effects, fake metrics, readiness percentages, or AI SaaS marketing treatment
+- Status meaning remains textual; color and markers are supporting signals only
+- Mobile navigation scrolls horizontally and dense two-column content recomposes below 620px
+
+Security and behavior
+---------------------
+Authentication and Phase 3 behavior were not replaced. Session handling, CSRF, same-origin
+validation, ownership filtering, request limits, audit logging, input validation, and XSS-safe
+rendering remain intact. The account menu uses the existing CSRF-protected logout endpoint.
+No future product functionality or fake data was added.
+
+Files changed
+-------------
+- src/app.js
+- public/styles.css
+
+Files added
+-----------
+- phase-4-design-system-ui-transcript.txt
+
+Testing
+-------
+Command: npm test
+Result: 21 tests passed, 0 failed.
+
+Syntax validation:
+- node --check src/app.js
+- node --check src/db.js
+- node --check src/profile.js
+- node --check src/security.js
+- node --check src/server.js
+- node --check tests/auth.test.js
+- node --check tests/profile.test.js
+
+Result: all modified JavaScript files passed syntax validation.
+
+Local HTML/CSS smoke checks
+---------------------------
+- /, /login, /signup, and /password-reset returned HTTP 200.
+- Anonymous /dashboard, /career-profile, and /onboarding returned protected redirects.
+- Authenticated dashboard, career profile, and settings rendered with the new account menu.
+- /styles.css returned HTTP 200 and exposed the centralized tokens, focus state, and mobile
+  breakpoint.
+
+Visual QA limitation
+--------------------
+The in-app browser automation connector was unavailable in this session, so screenshot-based
+manual viewport inspection could not be completed. Static rendered HTML, local route smoke
+checks, responsive CSS breakpoints, accessibility primitives, and automated regression tests
+were verified instead.
+
+Remaining limitations
+---------------------
+- No dark mode was added because none existed previously and it was not required for this phase.
+- The UI still uses server-rendered HTML without client-side modal or async loading behavior.
+- Evidence Locker and all downstream career intelligence surfaces remain intentionally deferred.
+
+Phase status
+------------
+The design-system and authenticated UI foundation are implemented without changing domain
+behavior. Next recommended phase: Phase 5 — Evidence Locker.

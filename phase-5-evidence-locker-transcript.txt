@@ -1,0 +1,81 @@
+Career Commander — Phase 5 Evidence Locker
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added a first-class, user-owned Evidence entity with structured title, description,
+  evidence type, capability context, source type, source title/reference, HTTP(S) URL,
+  timeframe, notes, timestamps, and explicit relationships.
+- Added authenticated Evidence Locker list, search/filter, empty state, add form, detail
+  view, edit form, delete flow, provenance display, and relationship display.
+- Added a small same-origin loading-state script for Evidence Locker form and filter
+  submissions using the existing server-rendered loading primitive.
+- Added API CRUD for evidence and maintained server-rendered HTML and built-in HTTP server.
+- Added audit events for evidence_created, evidence_updated, evidence_deleted,
+  evidence_linked, and evidence_unlinked.
+
+Data model
+- Added evidence table with database CHECK constraints for evidence types and capability
+  contexts.
+- Retained evidence_links as the single relationship table for skills, projects,
+  experience, and education.
+- Added ownership-aware database methods for listing, retrieving, creating, updating,
+  deleting, validating, and replacing evidence relationships.
+- Duplicate relationships are removed before insertion and also protected by the existing
+  unique constraint.
+- Deleting a related profile record removes only that relationship; the evidence remains.
+
+Migration and compatibility
+- Existing Phase 3 supporting_reference, associated_evidence, and evidence_reference
+  fields remain intact and accessible.
+- Existing evidence_links data remains the relationship model.
+- The new evidence table is additive through CREATE TABLE IF NOT EXISTS schema handling.
+- Added a migration test that closes and reopens the database and verifies existing profile,
+  education, skill, project, and experience data remains available.
+- Phase 3 free-text references are not silently converted into evidence records.
+
+API
+- GET /api/evidence
+- GET /api/evidence/:id
+- POST /api/evidence
+- PATCH|PUT|POST /api/evidence/:id
+- DELETE /api/evidence/:id
+- POST /api/evidence/:id/delete for server-rendered form deletion
+- Protected pages: /evidence, /evidence/new, /evidence/:id
+
+Security
+- Ownership is resolved from the authenticated session principal; no frontend user_id is
+  accepted or trusted.
+- Cross-user read, update, delete, and relationship attempts return non-disclosing errors.
+- Existing authentication, CSRF, same-origin checks, request limits, security headers, CSP,
+  and audit boundaries remain in place.
+- Evidence URLs accept only HTTP and HTTPS and reject dangerous schemes and credentials.
+- User content is HTML-escaped in list, detail, title, URL, source, notes, and form output.
+- Capability context remains explicit. Adding evidence does not promote LEARNING to VERIFIED
+  and does not independently verify any source.
+
+Tests
+- npm test: 27 passed, 0 failed.
+- Syntax validation passed for src/app.js, src/db.js, src/evidence.js, tests/auth.test.js,
+  tests/profile.test.js, and tests/evidence.test.js.
+- Evidence tests cover CRUD, ownership, unauthorized methods, CSRF, validation, dangerous
+  URLs, oversized content, XSS escaping, all relationship types, duplicate relationships,
+  cross-user links, related-record deletion, audit events, UI routes, empty state, and
+  Phase 3 data compatibility.
+
+Known limitations
+- Source URLs are user-provided references; no external source verification is performed.
+- There is no external evidence ingestion or verification service.
+- The server-rendered architecture does not use client-side data fetching; loading feedback
+  is limited to form/filter submission state.
+- Existing Phase 3 supporting-reference text is preserved but requires deliberate user action
+  to become a structured Evidence record.
+
+Architectural decisions
+- Evidence and capability context are separate concepts in the schema and language.
+- Relationships are explicit and user-confirmed rather than inferred from keywords.
+- Evidence records remain after related profile records are deleted to preserve provenance.
+- Structured fields and relationship IDs are available for later matcher, writer, and claim
+  guardrail phases.
+
+Next recommended phase: Phase 6 — Landing Page.

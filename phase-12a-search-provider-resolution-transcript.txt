@@ -1,0 +1,189 @@
+Career Commander — Phase 12A Search Provider Resolution
+Date: 2026-10-06
+
+Scope
+-----
+Investigated whether another search provider already available through the live
+OmniRoute instance could resolve the Phase 12A Web discovery blocker.
+Phase 13 was not started.
+Career Commander source code and database schemas were not modified.
+
+Career Commander inspection
+---------------------------
+Inspected:
+- src/discovery.js
+- src/omniRoute.js
+- src/opportunity.js
+- src/app.js
+- src/pipeline.js
+- package.json
+- discovery and OmniRoute tests
+
+Findings:
+- Career Commander uses the existing provider boundary and injects OmniRoute
+  through createApp/server configuration.
+- Profile-driven queries use target roles, location, and non-NO_EVIDENCE skills.
+- OmniRoute search sends POST /v1/search with {"query":"..."}.
+- Search calls are bounded to at most ten queries and the configured result limit.
+- Normalization maps title, company, URL, and raw job content fields.
+- Opportunity validation requires title, company, and job description content.
+- Existing automatic analysis, deduplication, provenance, and deterministic logic
+  were not changed.
+
+Live OmniRoute
+--------------
+Base URL: http://localhost:20128
+API base: http://localhost:20128/v1
+Health: healthy
+setupComplete: true
+
+Provider catalog/configuration inspection
+------------------------------------------
+The installed OmniRoute catalog contains credentialed providers including:
+- serper-search
+- brave-search
+- perplexity-search
+- exa-search
+- tavily-search
+- firecrawl
+- google-pse-search
+- linkup-search
+- searchapi-search
+- youcom-search
+- ollama-search
+- zai-search
+- jina-search
+- anysearch-search
+
+It also contains keyless/fallback entries:
+- duckduckgo-free
+- searxng-search
+
+Safe configuration inspection found no active search-provider connection. The
+configured active connections are not search providers. Credential values,
+cookies, tokens, and encrypted fields were not read or displayed.
+
+Current provider test
+---------------------
+Query: Python Django backend developer India jobs
+Provider: duckduckgo-free
+HTTP: 200
+Results: 0
+Individual jobs: none
+Useful content: none
+Credentials required: no
+
+Alternative provider tests
+--------------------------
+All tests used one bounded query and max_results=5. No secrets were supplied.
+
+Provider: searxng-search
+HTTP: 503
+Results: 0
+Individual jobs: no
+Useful content: no
+Credentials required: no, but the catalog-default local SearXNG endpoint was
+unavailable. This provider is not usable in the current environment.
+
+Provider: anysearch-search
+HTTP: 400
+Results: 0
+Individual jobs: no
+Useful content: no
+Credentials required: yes; no configured credential is available.
+
+Provider: brave-search
+HTTP: 400
+Results: 0
+Individual jobs: no
+Useful content: no
+Credentials required: yes; no configured credential is available.
+
+Provider: jina-search
+HTTP: 400
+Results: 0
+Individual jobs: no
+Useful content: no
+Credentials required: yes; no configured credential is available.
+
+Provider: serper-search
+HTTP: 400
+Results: 0
+Individual jobs: no
+Useful content: no
+Credentials required: yes; no configured credential is available.
+
+Result classification
+---------------------
+No provider returned an individual job posting, generic category page, or
+irrelevant result in this resolution test. The keyless provider returned zero;
+the alternative providers were unavailable or rejected requests before results.
+
+Provider selection
+------------------
+Selected provider: none.
+
+Reason:
+- Priority 1: no configured keyless provider returned an individual job.
+- Priority 2: no configured search credential was available for a credentialed
+  provider.
+- Priority 3: enabling Brave, Serper, Jina, AnySearch, or another paid/API-key
+  provider requires an operator-supplied credential/configuration change outside
+  this task.
+
+No external search stack was added. OmniRoute was not bypassed. No provider was
+hard-coded into Career Commander.
+
+Fresh-account Web flow
+----------------------
+Not rerun in this resolution attempt because no alternative provider was usable.
+Running the flow with zero-result DuckDuckGo or an unavailable provider cannot
+produce a genuine individual opportunity and would not change the evidence.
+
+The previous fresh-account Web metrics remain:
+- Found: 0
+- New: 0
+- Duplicates: 0
+- Rejected: 0
+- Analyzed: 0
+- Failed: 0
+
+Manual and mock-email paths remain covered by the existing tests and were not
+changed. No opportunity, URL, company, or job content was fabricated.
+
+Deterministic boundaries
+------------------------
+- Matcher remains code-authoritative.
+- Scorer remains code-authoritative.
+- Gap Analyzer remains code-authoritative.
+- No LLM score, match state, score breakdown, or gap override was introduced.
+
+Tests
+-----
+Command: npm test
+Result: 47 total; 46 passed; 0 failed; 1 skipped (opt-in live test).
+
+Command:
+$env:RUN_LIVE_OMNIROUTE='1';
+$env:OMNIROUTE_BASE_URL='http://localhost:20128/v1';
+$env:OMNIROUTE_MODEL='ddgw/gpt-4o-mini';
+npm test
+
+Result: 47 total; 47 passed; 0 failed; 0 skipped.
+
+Database changes
+----------------
+None.
+
+Files changed
+-------------
+- phase-12a-search-provider-resolution-transcript.txt
+
+Final status
+------------
+FAIL — EXTERNAL SEARCH PROVIDER LIMITATION
+
+Phase 12A cannot be marked PASS because no currently configured/usable OmniRoute
+search provider returned a genuine individual Web opportunity. The exact next
+requirement is to configure a supported search provider credential or provide a
+working SearXNG endpoint through OmniRoute’s secure configuration.

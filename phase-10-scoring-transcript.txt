@@ -1,0 +1,22 @@
+Career Commander — Phase 10 Deterministic Scoring Engine
+Implementation transcript
+Date: 2026-10-05
+
+Implementation
+- Added pure scoring in src/scoring.js and persisted ScoreBreakdowns.
+- Required requirements carry 70% weight and preferred requirements carry 30%.
+- Only MATCH counts toward the percentage; PARTIAL and MISSING remain explicit in the breakdown.
+- Stored required/preferred counts, states, weights, formula version, formula text, and overall score.
+- Rounds to one decimal place.
+
+Edge behavior
+- Only required uses the required score.
+- Only preferred uses the preferred score.
+- Empty groups are represented as null percentages.
+- Both groups empty produce an overall score of zero.
+
+Tests
+- Covered perfect, zero, required-only, preferred-only, partial, missing, no-required, no-preferred, both-empty, rounding, and deterministic repeatability cases.
+
+Status
+- PASS. Phase 10 behavior is exercised by tests/pipeline.test.js.

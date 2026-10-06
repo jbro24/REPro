@@ -1,0 +1,186 @@
+Career Commander — Phase 13 Gap-to-Evidence Roadmap & Application Workflow
+Date: 2026-10-06
+
+Scope
+-----
+Implemented Phase 13 only. Phase 14+ was not started.
+The Phase 12A external Web Search provider limitation was preserved and no Web
+Search provider code was changed.
+
+Baseline
+--------
+Before implementation:
+- npm test: 47 total; 46 passed; 0 failed; 1 skipped.
+- Existing deterministic Matcher, Scorer, Gap Analyzer, report, Evidence Locker,
+  authentication, and security controls were present.
+- Roadmap persistence existed, but generation was generic, status mutation and
+  roadmap evidence linkage were missing, and Applications was a placeholder.
+
+Implementation
+--------------
+1. Gap-to-evidence roadmap
+- Expanded src/roadmap.js with concrete, deterministic work templates.
+- AWS produces deployment/documentation work.
+- Docker produces containerization/documentation work.
+- PostgreSQL produces a database-backed feature/schema/query task.
+- TypeScript and Python produce focused artifact-and-test tasks.
+- Other requirements receive a bounded reviewable artifact task.
+- Required gaps sort before preferred gaps.
+- Empty persisted gaps produce no roadmap items.
+- Statuses are PLANNED, IN_PROGRESS, COMPLETED, and SKIPPED.
+
+2. Roadmap persistence and evidence linkage
+- Existing roadmap_items was reused.
+- Regeneration preserves matching item IDs, statuses, and linked evidence.
+- Roadmap items can be status-updated with ownership checks.
+- Existing Evidence Locker records can be linked to roadmap items.
+- Evidence remains user-provided context and does not automatically verify a skill.
+- Opportunity deletion cascades roadmap and roadmap-evidence relationships safely.
+
+3. Application workflow
+- Added a user-owned application draft model tied one-to-one to an opportunity.
+- Draft statuses: DRAFT, IN_REVIEW, READY_FOR_REVIEW, ARCHIVED.
+- Drafts are generated only after requirements, matches, score, and gaps exist.
+- Draft content uses candidate profile, skills, projects, evidence context, and
+  persisted gaps. It does not invent employment, achievements, certifications, or
+  years of experience.
+- Drafts are editable and re-checked when saved.
+
+4. Claim grounding
+- Added application_claims records with SUPPORTED, UNSUPPORTED, or NEEDS_REVIEW.
+- Candidate overclaims against a persisted gap, such as professional AWS
+  experience when AWS is not verified, are marked UNSUPPORTED.
+- Claims without a clear supporting profile/evidence basis remain NEEDS_REVIEW.
+- Claims show supporting Evidence Locker records where available.
+
+5. Human review
+- Applications page now lists real drafts.
+- Opportunity reports offer Prepare application draft.
+- Application review shows editable draft text, claim verdicts, reasons, linked
+  evidence, review notes, and review state.
+- There is no application-submission route or automatic submission status.
+
+Acceptance test data
+--------------------
+Test opportunity: Cloud Engineer at Example Co, India.
+Deterministic requirements:
+- AWS: REQUIRED
+- Docker: PREFERRED
+
+Persisted deterministic gaps:
+- AWS — REQUIRED / MISSING
+- Docker — PREFERRED / MISSING
+
+Generated roadmap:
+- AWS — REQUIRED / PLANNED
+  Action: Deploy an existing Django/PostgreSQL project to AWS and document the deployment.
+  Expected evidence: deployment configuration, architecture notes, logs/screenshots,
+  and repository documentation.
+- Docker — PREFERRED / PLANNED
+  Action: Containerize an existing backend project with Docker and document build/run steps.
+  Expected evidence: Dockerfile, compose configuration, repository changes, and run documentation.
+
+Roadmap execution:
+- AWS roadmap status changed PLANNED -> IN_PROGRESS.
+- A user-provided Backend repository evidence record was linked to the AWS roadmap item.
+- No skill was automatically promoted to VERIFIED.
+
+Application flow:
+- Opportunity analysis completed before draft creation.
+- Application draft created with DRAFT status.
+- Draft was edited to contain: “I have professional AWS experience.”
+- Claim grounding marked the claim UNSUPPORTED because AWS remained an identified
+  deterministic gap without verified evidence.
+- Draft was marked READY_FOR_REVIEW with a human review note.
+- Review page displayed the unsupported verdict.
+- No submit action appeared and no submission record/status was created.
+
+Deterministic preservation:
+- The fit score before and after roadmap/application actions remained unchanged.
+- The gap list before and after remained unchanged.
+- Roadmap source was persisted deterministic gaps, not an independent LLM decision.
+- Matcher, Scorer, and Gap Analyzer were not rewritten or overridden.
+
+Security and ownership
+----------------------
+- Roadmap mutations require an authenticated session and CSRF validation.
+- Application mutations require an authenticated session and CSRF validation.
+- Roadmap, application, opportunity, and evidence lookups are user-owned.
+- A second user received 404 for another user’s application and roadmap mutation.
+- Deleting the opportunity made the related application and roadmap unavailable.
+- Existing authentication, secure sessions, same-origin, XSS escaping, CSP, input
+  limits, URL validation, and audit events were preserved.
+
+Database changes
+----------------
+Additive tables created in src/db.js:
+- roadmap_evidence_links
+  - unique (user_id, roadmap_item_id, evidence_id)
+  - indexes on (user_id, roadmap_item_id) and (user_id, evidence_id)
+- applications
+  - unique (user_id, opportunity_id)
+  - status constraint: DRAFT, IN_REVIEW, READY_FOR_REVIEW, ARCHIVED
+  - index on (user_id, updated_at)
+- application_claims
+  - verdict constraint: SUPPORTED, UNSUPPORTED, NEEDS_REVIEW
+  - unique (application_id, claim_order)
+  - index on (user_id, application_id, claim_order)
+
+Existing roadmap rows with legacy SUGGESTED status are normalized to PLANNED.
+No destructive migration and no data reset were performed.
+
+API/UI additions
+----------------
+- POST /api/opportunities/:id/roadmap/generate
+- POST /api/roadmap-items/:id/status
+- POST /api/roadmap-items/:id/evidence
+- GET /api/opportunities/:id/roadmap
+- POST /api/opportunities/:id/application
+- GET /api/applications
+- GET /api/applications/:id
+- POST /api/applications/:id
+- POST /api/applications/:id/review
+- /applications now lists real application drafts.
+- /applications/:id provides draft editing and claim review.
+- Opportunity reports include roadmap and application sections.
+
+Tests
+-----
+Syntax validation passed for all modified JavaScript files.
+
+Command: npm test
+Result: 49 total; 48 passed; 0 failed; 1 skipped (opt-in live OmniRoute test).
+
+Command:
+$env:RUN_LIVE_OMNIROUTE='1';
+$env:OMNIROUTE_BASE_URL='http://localhost:20128/v1';
+$env:OMNIROUTE_MODEL='ddgw/gpt-4o-mini';
+npm test
+
+Result: 49 total; 49 passed; 0 failed; 0 skipped.
+
+Phase 12A Web limitation
+------------------------
+Preserved as documented. No Web Search provider repair or new discovery stack
+was attempted during Phase 13.
+
+Files changed
+-------------
+- src/roadmap.js
+- src/application.js
+- src/db.js
+- src/app.js
+- tests/pipeline.test.js
+- tests/phase13.test.js
+- phase-13-transcript.txt
+
+Final status
+------------
+PASS
+
+Phase 13 gap-to-evidence roadmap and human-reviewed application workflow are
+implemented and tested. No automatic application submission exists.
+
+Next phase
+----------
+Phase 14 would follow only after Phase 13 review. It was not implemented.

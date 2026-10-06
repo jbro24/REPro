@@ -1,0 +1,67 @@
+Career Commander — Phase 12 Workflow Correction
+Implementation transcript
+Date: 2026-10-06
+
+Objective
+- Correct the product information architecture around the intended Career Commander workflow.
+- Preserve the Phase 2–11 security, profile, evidence, opportunity, analyst, matcher, scorer, and gap-analysis work.
+- Make Manual, Web, and Email discovery converge into one automatically analyzed Opportunity pipeline.
+
+Architecture changes
+- Added provider-agnostic discovery boundaries for profile-driven Web search and mailbox scanning.
+- Added injectable OmniRoute-compatible search, company-signals, project-relevance, and report-synthesis providers.
+- Added a reusable automatic analysis runner that executes Job Analyst, Matcher, Scorer, and Gap Analysis in order.
+- Added deterministic roadmap generation from persisted gaps.
+- Added consolidated Opportunity report generation without allowing enrichment providers to change match states, scores, or gaps.
+- Preserved prior manual opportunity APIs and staged analysis endpoints for compatibility.
+
+Navigation and UI
+- Authenticated primary navigation is now Dashboard, Profile, Discover, Opportunities, Applications, and Settings.
+- Analysis is embedded in Opportunity reports; /analysis redirects to Opportunities.
+- Added a central Discover workspace with Manual, Web Search, and Email sections.
+- Profile remains the complete candidate context and links to the Evidence Locker.
+- Opportunities now render as a working queue with score, analysis state, gap count, source, and report links.
+- Opportunity detail now contains the consolidated report, source provenance, requirements, matches, score, gaps, company signals, relevant projects, and suggested evidence work.
+- Applications is an honest human-review surface and does not fabricate application records or automatic submission.
+
+Database changes
+- Added analysis_state, analysis_error, and analyzed_at to opportunities through migration-safe columns.
+- Added discovery_runs for actual Web, Email, and Manual run metrics and failure history.
+- Added mailbox_connections without storing credentials or provider secrets.
+- Added company_signals, project_relevance, roadmap_items, and opportunity_reports.
+- All new records are user-scoped and use existing foreign-key ownership boundaries.
+
+API changes
+- POST /api/discover/manual
+- POST /api/discover/web/scan
+- POST /api/discover/email/connect
+- POST /api/discover/email/scan
+- GET /api/discovery/runs
+- GET /api/opportunities/:id/report
+- Existing /api/opportunities, /api/profile, /api/evidence, and staged pipeline routes remain available.
+
+Automatic analysis behavior
+- New Manual, Web, and Email opportunities are normalized, deduplicated, provenance-linked, and automatically analyzed.
+- A failed provider stage preserves the opportunity and all successful prior stages.
+- Analysis state records the failed stage and a retry remains possible from the Opportunity report.
+- Duplicate Web or Email results add provenance without creating a second Opportunity or re-running completed analysis.
+
+Security
+- Existing authentication, session security, CSRF, same-origin validation, ownership filtering, URL validation, input limits, output escaping, and audit events were preserved.
+- Job postings and email content remain untrusted data.
+- Mailbox configuration stores provider and account labels only; credentials are not persisted.
+- Provider outputs are bounded by normalized opportunity validation and existing analyst schema validation.
+
+Tests
+- Existing suite: 38 passed, 0 failed.
+- New workflow suite: 4 passed, 0 failed.
+- Combined result: 42 passed, 0 failed.
+- New integration coverage includes Manual auto-analysis, profile-driven Web discovery, mock Email discovery, automatic analysis, deduplication, provenance, discovery history, report generation, and provider failure preservation.
+
+Limitations
+- No live OmniRoute, Gmail, or Outlook credentials are configured in this repository.
+- Production adapters must be injected into createApp; the current mock/provider boundaries are the honest local and test behavior.
+- Writer, claim-level Guardrail, and application-draft persistence remain later stages of the broader product vision.
+
+Phase status
+- PASS for the corrected Phase 12 workflow acceptance criteria implemented in this repository.

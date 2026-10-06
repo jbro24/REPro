@@ -1,0 +1,169 @@
+Career Commander — Phase 12A Web Discovery Root-Cause Test
+Date: 2026-10-06
+
+Scope
+-----
+Investigated the remaining Phase 12A blocker only. Phase 13 was not started.
+No Career Commander source code was modified during this investigation.
+
+Pre-change inspection
+--------------------
+Inspected:
+- src/discovery.js
+- src/omniRoute.js
+- src/opportunity.js
+- src/app.js
+- src/pipeline.js
+
+Profile query generation:
+- buildSearchQueries uses target roles, location, and up to four non-NO_EVIDENCE skills.
+- It bounds roles to 10 and produces profile-driven queries ending in "jobs".
+- The previously observed fresh-account queries were:
+  - Backend Engineer India AWS Django Docker Git jobs
+  - Cloud Systems Engineer India AWS Django Docker Git jobs
+
+OmniRoute adapter:
+- Uses OMNIROUTE_BASE_URL with default http://localhost:20128/v1.
+- Sends POST /search with the singular JSON field {"query":"..."}.
+- Accepts a provider response result array and bounds the returned list.
+- Uses configured timeout, bounded retries, typed provider errors, and safe structured logs.
+- No API key or secret was logged.
+
+Result normalization and validation:
+- Maps title/jobTitle, company/organization, URL/jobUrl, and rawContent/description/body.
+- Opportunity validation requires title, company, and job description content.
+- URL, source, size, and provenance metadata are also validated.
+- Generic/category pages are not accepted by weakening these requirements.
+
+Automatic analysis and metrics:
+- Accepted normalized opportunities converge through processOpportunityPayload.
+- New opportunities automatically run the existing analyst, matcher, scorer, gap pipeline.
+- Duplicate opportunities add provenance and do not rerun completed analysis.
+- Discovery metrics are derived from the provider result array and normalization/processing outcomes.
+
+OmniRoute health
+----------------
+GET http://localhost:20128/api/monitoring/health
+Result: HTTP 200
+Provider health: healthy
+setupComplete: true
+
+Direct bounded search test
+--------------------------
+Endpoint: POST http://localhost:20128/v1/search
+Provider reported by response: duckduckgo-free
+Payload for each request: {"query":"<query>"}
+All six requests returned HTTP 200, an empty result array, and no API/transport error.
+
+1. Query: Python Django backend jobs India
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+2. Query: Python Django developer jobs India
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+3. Query: Django backend engineer India AWS PostgreSQL
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+4. Query: Python backend engineer India fresher
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+5. Query: Python software engineer India jobs
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+6. Query: Django developer Bangalore jobs
+   HTTP: 200
+   Provider: duckduckgo-free
+   Result count: 0
+   Titles: none
+   URLs: none
+   Snippets/content: none
+   Classification: no result
+
+Root-cause classification
+-------------------------
+CASE C — OmniRoute search provider limitation.
+
+Evidence:
+1. Six distinct, bounded, realistic job queries were sent directly to the live
+   /v1/search endpoint.
+2. Every request reached duckduckgo-free successfully and returned HTTP 200.
+3. Every response contained zero results, with no malformed-response or upstream
+   failure error.
+4. Therefore Career Commander received no candidate records to normalize, reject,
+   deduplicate, persist, or analyze.
+5. The application’s query generator is not the sole cause: the direct test used
+   simpler queries than the fresh-profile queries and still received zero results.
+6. The application’s validation is not the cause: validation runs only after a
+   result exists, and there were no results in this run.
+
+Fresh-account Web metrics from the prior acceptance run
+--------------------------------------------------------
+Generated profile-driven queries:
+- Backend Engineer India AWS Django Docker Git jobs
+- Cloud Systems Engineer India AWS Django Docker Git jobs
+
+Found: 0
+New: 0
+Duplicates: 0
+Rejected: 0
+Analyzed: 0
+Failed: 0
+
+No opportunity was fabricated.
+
+Tests
+-----
+Command: npm test
+Result: 47 tests total; 46 passed; 0 failed; 1 skipped (opt-in live test).
+
+Command:
+$env:RUN_LIVE_OMNIROUTE='1';
+$env:OMNIROUTE_BASE_URL='http://localhost:20128/v1';
+$env:OMNIROUTE_MODEL='ddgw/gpt-4o-mini';
+npm test
+
+Result: 47 tests total; 47 passed; 0 failed; 0 skipped.
+The live OmniRoute search/chat contract passed.
+
+Code changes
+------------
+None. No deterministic logic, validation, security control, or provider boundary
+was changed because the evidence did not demonstrate an application bug.
+
+Final status
+------------
+FAIL — PROVIDER LIMITATION
+
+Phase 12A cannot be marked PASS because the live search provider did not return a
+genuine individual Web opportunity. The remaining blocker is upstream of Career
+Commander’s normalization and analysis pipeline.

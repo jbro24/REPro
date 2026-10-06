@@ -1,0 +1,146 @@
+Career Commander — Phase 3 Transcript
+======================================
+
+User request
+------------
+Implement the initial user-owned Career Profile and progressive onboarding system without
+replacing the Phase 2 Node HTTP + SQLite architecture. Preserve authentication, CSRF,
+same-origin validation, security headers, XSS escaping, request limits, and server-side
+ownership. Do not implement future job, matching, scoring, roadmap, application, or
+submission features.
+
+Phase 2 inspection
+------------------
+The existing application uses Node.js built-in HTTP, Node's built-in SQLite support,
+server-rendered HTML, a single AppDatabase class, salted scrypt, hashed opaque sessions,
+CSRF cookies/session tokens, security headers, and integration tests under tests/auth.test.js.
+No frontend framework, Express, ORM, or second database was introduced.
+
+Implemented profile model
+-------------------------
+- One Career Profile per user, enforced by the existing profiles.user_id UNIQUE constraint.
+- name
+- target roles
+- location
+- current status
+- professional summary
+- persisted onboarding step and completion flag
+
+Implemented user-owned entities
+--------------------------------
+- Education: institution, degree/program, field, dates, description.
+- Skills: name, explicit VERIFIED/LEARNING/NO_EVIDENCE status, supporting reference,
+  description. VERIFIED requires a supporting reference.
+- Projects: name, description, technologies, contribution, timeframe, repository/demo URLs,
+  outcome, associated evidence/reference.
+- Experience: organization, role, description, dates, responsibilities, technologies,
+  evidence/reference.
+
+Evidence model preparation
+--------------------------
+Added an evidence_links table scoped by user_id and prepared for future Evidence Locker
+records. It supports links from future evidence to skills, projects, experience, and
+education. Profile declarations are not treated as evidence, education does not infer
+technology experience, and technology names do not infer production experience.
+
+Onboarding flow
+---------------
+Signup now redirects to:
+
+welcome → profile → skills → projects → experience → evidence → dashboard
+
+The state is stored server-side on the user's profile row. Optional sections can be skipped;
+partial data persists; users can refresh, leave, return, and edit previous information.
+The evidence setup step shows an explicit skill-state summary and does not calculate fit or
+job-readiness.
+
+Routes and APIs
+---------------
+Pages:
+- /onboarding
+- /onboarding/welcome
+- /onboarding/profile
+- /onboarding/skills
+- /onboarding/projects
+- /onboarding/experience
+- /onboarding/evidence
+- /career-profile now renders the full persisted profile workspace.
+- /dashboard now renders onboarding state and the evidence summary.
+
+APIs:
+- GET/POST/PUT /api/profile
+- GET/POST/PATCH/DELETE /api/education and /api/education/:id
+- GET/POST/PATCH/DELETE /api/skills and /api/skills/:id
+- GET/POST/PATCH/DELETE /api/projects and /api/projects/:id
+- GET/POST/PATCH/DELETE /api/experience and /api/experience/:id
+- GET/POST/PATCH /api/onboarding
+
+All mutations accept CSRF-protected form or JSON requests. Ownership is derived only from
+the authenticated session principal. User IDs are not accepted from query parameters, path
+ownership fields, request bodies, or hidden form inputs.
+
+Validation and integrity
+------------------------
+- Profile, education, skills, projects, and experience validate server-side.
+- Dates use YYYY-MM-DD and reject reversed ranges.
+- Project repository/demo URLs accept only HTTP/HTTPS URLs without credentials.
+- Duplicate skill names are prevented per user by a database UNIQUE constraint.
+- Foreign keys cascade user deletion.
+- Entity deletion removes that user's future evidence links first.
+- User-provided values are escaped before HTML rendering.
+- Cross-user reads, updates, and deletes return not-found behavior.
+
+UI direction
+------------
+The authenticated screens use warm paper, charcoal/navy typography, neutral dividers,
+restrained Sakura pink, generous spacing, visible labels, required/optional cues, concise
+descriptions, and no gradients, gamified readiness score, or generic AI SaaS styling.
+
+Files changed or added
+----------------------
+- src/db.js
+- src/profile.js
+- src/app.js
+- public/styles.css
+- tests/profile.test.js
+- README.md
+- docs/authentication-boundaries.md
+- docs/profile-boundaries.md
+- phase-3-profile-onboarding-transcript.txt
+
+Tests and validation
+--------------------
+Command: npm test
+Result: 21 tests passed, 0 failed.
+
+The suite includes all Phase 2 authentication tests plus Phase 3 coverage for profile
+CRUD/validation/persistence, server-rendered onboarding, education, skill-state rules,
+projects, experience, cross-user isolation for every Phase 3 collection, onboarding resume,
+skips and completion, unauthorized mutation, invalid URLs, invalid dates, duplicate skills,
+and XSS-safe rendering.
+
+Syntax validation:
+- node --check src/app.js
+- node --check src/db.js
+- node --check src/profile.js
+- node --check src/security.js
+- node --check src/server.js
+- node --check tests/auth.test.js
+- node --check tests/profile.test.js
+
+Result: all modified JavaScript files passed syntax validation.
+
+Known limitations
+-----------------
+- The Evidence Locker itself is intentionally deferred to Phase 4/5.
+- Supporting references are currently candidate-entered text fields; they are not yet
+  validated against Evidence Locker records.
+- Node's built-in SQLite support requires Node 22.14+ and emits its expected experimental
+  feature warning.
+- Existing Phase 2 password-reset email delivery remains unconfigured.
+
+Phase status
+------------
+Phase 3 acceptance criteria are implemented and tested. No job discovery, requirement
+analysis, matching, fit scoring, gaps, roadmaps, applications, claims, or submission
+features were added.

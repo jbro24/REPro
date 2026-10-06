@@ -1,0 +1,175 @@
+Career Commander — Phase 12A Fresh-Account Verification Transcript
+Date: 2026-10-06
+
+Scope
+-----
+Fresh-account end-to-end verification only. Phase 13 was not started.
+No existing user was reused, modified, or deleted. No credentials are recorded
+in this transcript.
+
+Pre-change checks
+-----------------
+Command:
+  npm test
+
+Result before the fresh-account run:
+  47 total, 46 passed, 0 failed, 1 skipped
+
+The skipped test was the opt-in live OmniRoute contract test.
+
+Application flow
+----------------
+The real server-rendered application routes were used for signup, logout,
+login, profile, education, skills, projects, evidence, Discover, and Web scan.
+The browser automation surface was unavailable in this session, so a visual
+browser interaction cannot be claimed. The underlying application UI forms and
+their HTTP actions were exercised directly. This limitation is recorded rather
+than hidden.
+
+Fresh Account
+-------------
+- New synthetic account created through POST /api/auth/signup: PASS
+- Signup established an authenticated session: PASS
+- Anonymous /dashboard redirected to /login: PASS
+- Logout through the application form: PASS
+- Login through POST /api/auth/login: PASS
+- Authenticated /dashboard returned 200: PASS
+- No existing account was reused.
+- Credentials are intentionally omitted.
+
+Profile persistence
+-------------------
+The new account was populated through the application forms with:
+
+- Career context: PASS
+- Education: PASS
+- Skills: 8 records saved: PASS
+- Projects: 3 records saved: PASS
+- Evidence Locker: 3 records saved and linked: PASS
+
+The profile was reloaded after navigating away and returned with persisted
+candidate data. The records were read through the authenticated account only.
+
+The test profile used explicit candidate context, including Backend Engineer
+and Cloud Systems Engineer target roles, India location, student status, and a
+concise backend/cloud/applied-AI summary. Education used a clearly synthetic
+test institution and made no grade, award, or external-verification claim.
+
+Skills used a mixed state set:
+  VERIFIED: Python, Django, PostgreSQL, Git
+  LEARNING: AWS, Docker, TypeScript
+  NO_EVIDENCE: Kubernetes
+
+The VERIFIED states had linked user-provided project evidence. The evidence
+records explicitly stated that they were acceptance artifacts and not
+independently verified.
+
+Discover UI
+-----------
+Authenticated Discover page: PASS
+Manual section: PASS
+Web Search section: PASS
+Email section: PASS
+
+Web discovery
+-------------
+The application generated profile-driven queries without a manual query field:
+
+  Backend Engineer India AWS Django Docker Git jobs
+  Cloud Systems Engineer India AWS Django Docker Git jobs
+
+Latest DiscoveryRun:
+
+  status: COMPLETED
+  found: 0
+  new: 0
+  duplicates: 0
+  rejected: 0
+  analyzed: 0
+  failed: 0
+
+OmniRoute health was healthy and the duckduckgo-free provider returned a valid
+search response with zero results for these queries. A focused direct check
+also returned zero results, with no provider error. Therefore no individual
+job opportunity existed to inspect, analyze, deduplicate, or report.
+
+No job title, company, URL, content, score, or report was fabricated.
+
+Automatic analysis
+------------------
+Not reached for the fresh-account Web path because OmniRoute returned zero
+results. Existing deterministic/manual/workflow tests remain passing, but the
+fresh-account Web acceptance chain could not begin at Opportunity creation.
+
+Individual Job
+--------------
+None. The live provider returned no identifiable individual opportunity for
+the fresh-account profile-driven queries.
+
+Deduplication
+-------------
+Not exercised for the fresh-account Web path because there was no accepted
+individual opportunity to import manually. Existing deduplication tests pass.
+
+Failure recovery
+----------------
+Not run against a fresh-account Web opportunity because no opportunity was
+created. Existing provider-failure preservation and retry tests pass.
+
+Email
+-----
+No live Gmail or Outlook mailbox was connected. The normal server process does
+not configure a mock mailbox provider; mock mailbox convergence is covered by
+the existing injected-provider workflow tests. No mailbox credentials were
+stored or exposed.
+
+Security
+--------
+The fresh-account route run preserved and exercised:
+
+- authentication and session establishment;
+- protected-page redirects;
+- CSRF and same-origin checks on mutations;
+- account ownership boundaries;
+- CSP and XSS escaping in the existing application;
+- audit logging;
+- secret-safe provider handling.
+
+Database
+--------
+No schema, migration, index, or constraint changes were made.
+Existing user data was not modified or deleted.
+
+Tests after verification
+------------------------
+Command:
+  npm test
+
+Result:
+  47 total, 46 passed, 0 failed, 1 skipped
+
+Command with live OmniRoute:
+  RUN_LIVE_OMNIROUTE=1 npm test
+  (PowerShell environment equivalent used.)
+
+Result:
+  47 total, 47 passed, 0 failed, 0 skipped
+
+Files changed in this fresh-account task
+-----------------------------------------
+  phase-12a-fresh-account-transcript.txt
+
+No product source files were changed during this verification.
+
+Final status
+------------
+  FAIL
+
+Exact blocker:
+  The fresh authenticated profile persisted correctly, but the live
+  profile-driven OmniRoute search returned zero results. Consequently, no
+  genuine individual opportunity entered the automatic analysis pipeline.
+  The Phase 12A PASS criterion requiring one real Web opportunity through
+  Requirements -> Match -> Score -> Gaps -> Report was not met.
+
+Phase 13 was not started.
